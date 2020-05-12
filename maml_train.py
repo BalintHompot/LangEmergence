@@ -14,6 +14,7 @@ import options
 from time import gmtime, strftime
 
 from copy import deepcopy
+from random import sample
 
 # read the command line options
 options = options.read()
@@ -56,10 +57,11 @@ for param in team.qBot.parameters():
 for episode in range(params['num_episodes']):
 
     totalReward = 0
-    sampled_tasks = [1,1,1,1,1] ### add sampling of tasks here
+    sampled_tasks = sample(range(data.numPairTasks), params['num_tasks_per_episode'])
 
     for task in sampled_tasks:
         ## create copy of team for inner update, and inner optimizers
+        batch_task_list = torch.LongTensor([task for i in range(params['batchSize'])])      ### all tasks should be the same in an iteration with maml
         copied_team = deepcopy(team)
         for param in copied_team.aBot.parameters():
             param.requires_grad = True
@@ -75,11 +77,11 @@ for episode in range(params['num_episodes']):
         # get double attribute tasks
         if 'train' not in matches:
             batchImg, batchTask, batchLabels \
-                                = data.getBatch(params['batchSize'])
+                                = data.getBatch(params['batchSize'], tasks=batch_task_list)
         else:
             batchImg, batchTask, batchLabels \
                     = data.getBatchSpecial(params['batchSize'], matches['train'],\
-                                                            params['negFraction'])
+                                                             batch_task_list, params['negFraction'])
 
         for inner_step in range(params['inner_steps'] - 1):
 
@@ -99,11 +101,11 @@ for episode in range(params['num_episodes']):
         ## sampling query set
         if 'train' not in matches:
             batchImg, batchTask, batchLabels \
-                                = data.getBatch(params['batchSize'])
+                                = data.getBatch(params['batchSize'], tasks=batch_task_list)
         else:
             batchImg, batchTask, batchLabels \
                     = data.getBatchSpecial(params['batchSize'], matches['train'],\
-                                                            params['negFraction'])
+                                                             batch_task_list, params['negFraction'])
 
         # forward pass
         copied_team.forward(Variable(batchImg), Variable(batchTask))

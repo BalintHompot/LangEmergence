@@ -129,9 +129,10 @@ class Dataloader:
     def getInstCount(self): return self.numInst
 
     # get a batch
-    def getBatch(self, batchSize):
+    def getBatch(self, batchSize, tasks = 'dosample'):
         # sample tasks
-        tasks = torch.LongTensor(batchSize).random_(0, self.numPairTasks)
+        if tasks == 'dosample':
+            tasks = torch.LongTensor(batchSize).random_(0, self.numPairTasks)
         # sample a batch
         indices = torch.LongTensor(batchSize).random_(0, self.numInst['train'])
         if self.useGPU: indices = indices.cuda()
@@ -147,9 +148,10 @@ class Dataloader:
         return batch, tasks, labels
 
     # get a batch
-    def getBatchSpecial(self, batchSize, currentPred, negFraction=0.8):
+    def getBatchSpecial(self, batchSize, currentPred, tasks = 'dosample', negFraction=0.8):
         # sample tasks
-        tasks = torch.LongTensor(batchSize).random_(0, self.numPairTasks)
+        if tasks == 'dosample':
+            tasks = torch.LongTensor(batchSize).random_(0, self.numPairTasks)
         # sample a batch
         indices = torch.LongTensor(batchSize).random_(0, self.numInst['train'])
         if self.useGPU: indices = indices.cuda()

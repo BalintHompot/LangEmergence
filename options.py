@@ -43,7 +43,7 @@ def read():
     # MAML options
     parser.add_argument('-inner_steps', default=5, type=int,\
                         help='Number of inner loop steps - MAML')
-    parser.add_argument('-num_tasks_per_episode', default=5, type=int,\
+    parser.add_argument('-num_tasks_per_episode', default=3, type=int,\
                         help='Number of tasks in one episode - MAML')
     parser.add_argument('-num_episodes', default=1000, type=int,\
                         help='Number of episodes - MAML')
