@@ -40,6 +40,15 @@ def read():
                             help='Initial learning rate')
     parser.add_argument('-useGPU', dest='useGPU', action='store_true')
 
+    # MAML options
+    parser.add_argument('-inner_steps', default=5, type=int,\
+                        help='Number of inner loop steps - MAML')
+    parser.add_argument('-num_tasks_per_episode', default=5, type=int,\
+                        help='Number of tasks in one episode - MAML')
+    parser.add_argument('-num_episodes', default=1000, type=int,\
+                        help='Number of episodes - MAML')
+    parser.add_argument('-learningRate_inner', default=1e-3, type=float,\
+                            help='Inner learning rate')
     try:
       parsed = vars(parser.parse_args())
     except IOError as err:
