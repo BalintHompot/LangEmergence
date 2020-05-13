@@ -45,6 +45,8 @@ class Dataloader:
         self.taskSelect = torch.LongTensor(self.taskDefn)
 
         # number of single and pair wise tasks
+        # self.numPairTasks = 6
+        # self.numSingleTasks = 3
         self.numPairTasks = 20
         self.numSingleTasks = 5
 
@@ -83,14 +85,18 @@ class Dataloader:
 
     # create and save the dataset
     def saveDataset(self, savePath, trainSize=0.8):
+        # attributes = ['colors', 'shapes', 'styles']
         attributes = ['colors', 'shapes', 'styles', 'sizes', 'positions']
         # larger dataset
-        #props = {'colors': ['red', 'green', 'blue', 'purple', \
+        # props = {'colors': ['red', 'green', 'blue', 'purple', \
         #                    'yellow', 'cyan', 'orange', 'teal'], \
         #        'shapes': ['square', 'triangle', 'circle', 'star', \
         #                    'heart', 'pentagon', 'hexagon', 'ring'],\
         #       'styles': ['dotted', 'solid', 'filled', 'dashed', 'hstripe', \
         #                   'vstripe', 'hgradient', 'vgradient']}
+        # props = {'colors': ['red', 'green', 'blue', 'purple'],\
+        #         'shapes': ['square', 'triangle', 'circle', 'star'], \
+        #         'styles': ['dotted', 'solid', 'filled', 'dashed']}
         props = {'colors': ['red', 'green', 'blue', 'purple'],\
                 'shapes': ['square', 'triangle', 'circle', 'star'], \
                 'styles': ['dotted', 'solid', 'filled', 'dashed'], \
@@ -107,7 +113,6 @@ class Dataloader:
 
         # randomly select test
         splitData = {}
-        print(random.sample(dataVerbose, numInst['test']))
         splitData['test'] = random.sample(dataVerbose, numInst['test'])
         splitData['train'] = list(set(dataVerbose) - set(splitData['test']))
 
@@ -142,7 +147,9 @@ class Dataloader:
     # get a batch
     def getBatch(self, batchSize, tasks = 'dosample'):
         # sample tasks
-        if tasks == 'dosample':
+        # if tasks == 'dosample':
+        #     tasks = torch.LongTensor(batchSize).random_(0, self.numPairTasks)
+        if type(tasks) is 'str':
             tasks = torch.LongTensor(batchSize).random_(0, self.numPairTasks)
         # sample a batch
         indices = torch.LongTensor(batchSize).random_(0, self.numInst['train'])
@@ -161,7 +168,9 @@ class Dataloader:
     # get a batch
     def getBatchSpecial(self, batchSize, currentPred, negFraction=0.8, tasks = 'dosample'):
         # sample tasks
-        if tasks == 'dosample':
+        # if tasks == 'dosample':
+        #     tasks = torch.LongTensor(batchSize).random_(0, self.numPairTasks)
+        if type(tasks) == 'str':
             tasks = torch.LongTensor(batchSize).random_(0, self.numPairTasks)
         # sample a batch
         indices = torch.LongTensor(batchSize).random_(0, self.numInst['train'])
@@ -264,4 +273,4 @@ if __name__ == '__main__':
     options = {}
     # create dataloader
     data = Dataloader(options)
-    data.saveDataset('data/5atts20tasks_split_0.8.json', 0.8)
+    data.saveDataset('data/toy520_split_0.8.json', 0.8)
