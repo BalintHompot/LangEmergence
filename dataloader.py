@@ -149,7 +149,7 @@ class Dataloader:
         # sample tasks
         # if tasks == 'dosample':
         #     tasks = torch.LongTensor(batchSize).random_(0, self.numPairTasks)
-        if type(tasks) is 'str':
+        if isinstance(tasks, str):
             tasks = torch.LongTensor(batchSize).random_(0, self.numPairTasks)
         # sample a batch
         indices = torch.LongTensor(batchSize).random_(0, self.numInst['train'])
@@ -170,7 +170,7 @@ class Dataloader:
         # sample tasks
         # if tasks == 'dosample':
         #     tasks = torch.LongTensor(batchSize).random_(0, self.numPairTasks)
-        if type(tasks) == 'str':
+        if isinstance(tasks, str):
             tasks = torch.LongTensor(batchSize).random_(0, self.numPairTasks)
         # sample a batch
         indices = torch.LongTensor(batchSize).random_(0, self.numInst['train'])
