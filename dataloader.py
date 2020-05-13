@@ -148,7 +148,7 @@ class Dataloader:
         return batch, tasks, labels
 
     # get a batch
-    def getBatchSpecial(self, batchSize, currentPred, tasks = 'dosample', negFraction=0.8):
+    def getBatchSpecial(self, batchSize, currentPred, negFraction=0.8, tasks = 'dosample'):
         # sample tasks
         if tasks == 'dosample':
             tasks = torch.LongTensor(batchSize).random_(0, self.numPairTasks)

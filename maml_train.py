@@ -14,7 +14,7 @@ import options
 from time import gmtime, strftime
 
 from copy import deepcopy
-from random import sample
+from random import sample, shuffle
 
 # read the command line options
 options = options.read()
@@ -40,6 +40,16 @@ team.train()
 #------------------------------------------------------------------------
 # begin training
 
+### split tasks into train, valid and test
+task_list = [t for t in range(data.numPairTasks)]
+shuffle(task_list)
+num_train_tasks = 4
+num_val_tasks = 1
+num_test_tasks = 1
+train_tasks = task_list[:num_train_tasks]
+val_tasks = task_list[num_train_tasks:num_train_tasks+num_val_tasks]  
+test_tasks = task_list[num_train_tasks+num_val_tasks:] 
+
 count = 0
 savePath = 'models/tasks_inter_%dH_%.4flr_%r_%d_%d.tar' %\
             (params['hiddenSize'], params['learningRate'], params['remember'],\
@@ -57,7 +67,7 @@ for param in team.qBot.parameters():
 for episode in range(params['num_episodes']):
 
     totalReward = 0
-    sampled_tasks = sample(range(data.numPairTasks), params['num_tasks_per_episode'])
+    sampled_tasks = sample(train_tasks, params['num_tasks_per_episode'])
 
     for task in sampled_tasks:
         ## create copy of team for inner update, and inner optimizers
@@ -81,7 +91,7 @@ for episode in range(params['num_episodes']):
         else:
             batchImg, batchTask, batchLabels \
                     = data.getBatchSpecial(params['batchSize'], matches['train'],\
-                                                             batch_task_list, params['negFraction'])
+                                                             params['negFraction'], tasks=batch_task_list)
 
         for inner_step in range(params['inner_steps'] - 1):
 
@@ -105,7 +115,7 @@ for episode in range(params['num_episodes']):
         else:
             batchImg, batchTask, batchLabels \
                     = data.getBatchSpecial(params['batchSize'], matches['train'],\
-                                                             batch_task_list, params['negFraction'])
+                                                             params['negFraction'], tasks=batch_task_list)
 
         # forward pass
         copied_team.forward(Variable(batchImg), Variable(batchTask))
