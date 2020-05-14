@@ -77,6 +77,7 @@ for iterId in range(params['numEpochs'] * numIterPerEpoch):
         img, task, labels = data.getCompleteData(dtype)
         # evaluate on the train dataset, using greedy policy
         guess, _, _ = team.forward(Variable(img), Variable(task))
+
         # compute accuracy for color, shape, and both
         firstMatch = guess[0].data == labels[:, 0].long()
         secondMatch = guess[1].data == labels[:, 1].long()

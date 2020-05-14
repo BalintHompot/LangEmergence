@@ -144,6 +144,7 @@ for episode in range(params['num_episodes']):
         # evaluate on the train dataset, using greedy policy
         guess, _, _ = team.forward(Variable(img), Variable(task))
         # compute accuracy for color, shape, and both
+
         firstMatch = guess[0].data == labels[:, 0].long()
         secondMatch = guess[1].data == labels[:, 1].long()
         matches[dtype] = firstMatch & secondMatch

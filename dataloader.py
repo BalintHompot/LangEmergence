@@ -201,6 +201,7 @@ class Dataloader:
     # Get all configurations
     def getCompleteData(self, dtype):
         # expand self.data three folds, along with labels
+
         batch = self.data[dtype].unsqueeze(0).repeat(1, 1, self.numPairTasks)
         batch = batch.view(-1, self.numAttrs)
         tasks = torch.arange(0, self.numPairTasks).long()
