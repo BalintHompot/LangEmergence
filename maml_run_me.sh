@@ -1,4 +1,4 @@
-DATA_PATH='data/toy64_split_0.8.json'
+DATA_PATH='data/toy520_split_0.8.json'
 VISIBLE_CUDA_DEVICES=0
 
 # Train the agents.
