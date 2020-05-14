@@ -42,8 +42,9 @@ team.train()
 
 ### split tasks into train, valid and test
 task_list = [t for t in range(data.numPairTasks)]
+
 shuffle(task_list)
-num_train_tasks = 4
+num_train_tasks = 18
 num_val_tasks = 1
 num_test_tasks = 1
 train_tasks = task_list[:num_train_tasks]
