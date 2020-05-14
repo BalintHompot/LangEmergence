@@ -293,7 +293,8 @@ class Team:
 
         # cummulative reward
         batchReward = torch.mean(self.reward)/self.rlScale
-        if self.totalReward == None: self.totalReward = batchReward
+        #if self.totalReward == None: self.totalReward = batchReward
+        if type(self.totalReward) is type(None): self.totalReward = batchReward
         self.totalReward = 0.95 * self.totalReward + 0.05 * batchReward
 
         return batchReward
