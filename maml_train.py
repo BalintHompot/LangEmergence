@@ -176,6 +176,20 @@ for episode in range(params['num_episodes']):
                         (time, episode, totalReward,\
                         accuracy['train'], accuracy['test']))
 
+
+    
+        # save model and res if validation accuracy is the best
+        if accuracy['test'] >= best_results["valid_seen_domains"]:
+            saveModel(savePath, team, optimizer_inner, params)
+            new_best_results = {
+                "train_seen_domains" : accuracy['train'].item(),
+                "valid_seen_domains" : accuracy['test'].item(),
+                "test_seen_domains": 0,
+                "test_unseen_domains" : 0
+            }
+            best_results = new_best_results
+            store_results(new_best_results, MODELNAME, params)
+
         # break if train accuracy reaches 100%
         if accuracy['train'] == 100: break
         # switch to train
@@ -183,10 +197,6 @@ for episode in range(params['num_episodes']):
         team.train()
 
 
-    
-    # save for every 100 episodes
-    if episode >= 0 and episode % 100 == 0:
-        saveModel(savePath, team, optimizer_inner, params)
 
 ### save final model
 saveModel(savePath, team, optimizer_inner, params)

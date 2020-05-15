@@ -96,6 +96,18 @@ for iterId in range(params['numEpochs'] * numIterPerEpoch):
         # switch to train
         team.train()
 
+        # save model and res if validation accuracy is the best
+        if accuracy['test'] >= best_results["valid_seen_domains"]:
+            saveModel(savePath, team, optimizer, params)
+            new_best_results = {
+                "train_seen_domains" : accuracy['train'].item(),
+                "valid_seen_domains" : accuracy['test'].item(),
+                "test_seen_domains": 0,
+                "test_unseen_domains" : 0
+            }
+            best_results = new_best_results
+            store_results(new_best_results, MODELNAME, params)
+
         # break if train accuracy reaches 100%
         if accuracy['train'] == 100: break
 
@@ -106,9 +118,5 @@ for iterId in range(params['numEpochs'] * numIterPerEpoch):
                                     (time, iterId, epoch, team.totalReward,\
                                     accuracy['train'], accuracy['test']))
 
-    # save for every 5k epochs
-    # if iterId > 0 and iterId % (10000*numIterPerEpoch) == 0:
-    if iterId >= 0 and iterId % 5000 == 0:
-        saveModel(savePath,team, optimizer, params)
 
 saveModel(savePath, team, optimizer, params)

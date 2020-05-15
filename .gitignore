@@ -1,6 +1,5 @@
 models/*
 *.log
-results/*
 *.html
 *pyc
 *pickle
