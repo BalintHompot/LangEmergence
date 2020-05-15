@@ -80,7 +80,7 @@ for iterId in range(params['numEpochs'] * numIterPerEpoch):
         # switch to evaluate
         team.evaluate()
 
-        for dtype in ['train', 'test']:
+        for dtype in ['train', 'valid', 'test']:
             # get the entire batch
             img, task, labels = data.getCompleteData(dtype)
             # evaluate on the train dataset, using greedy policy
@@ -97,12 +97,12 @@ for iterId in range(params['numEpochs'] * numIterPerEpoch):
         team.train()
 
         # save model and res if validation accuracy is the best
-        if accuracy['test'] >= best_results["valid_seen_domains"]:
+        if accuracy['valid'] >= best_results["valid_seen_domains"]:
             saveModel(savePath, team, optimizer, params)
             new_best_results = {
                 "train_seen_domains" : accuracy['train'].item(),
-                "valid_seen_domains" : accuracy['test'].item(),
-                "test_seen_domains": 0,
+                "valid_seen_domains" : accuracy['valid'].item(),
+                "test_seen_domains": accuracy['test'].item(),
                 "test_unseen_domains" : 0
             }
             best_results = new_best_results
@@ -114,9 +114,9 @@ for iterId in range(params['numEpochs'] * numIterPerEpoch):
         if iterId % 100 != 0: continue
 
         time = strftime("%a, %d %b %Y %X", gmtime())
-        print('[%s][Iter: %d][Ep: %.2f][R: %.4f][Tr: %.2f Te: %.2f]' % \
+        print('[%s][Iter: %d][Ep: %.2f][R: %.4f][Train: %.2f Valid: %.2f Teest: %.2f]' % \
                                     (time, iterId, epoch, team.totalReward,\
-                                    accuracy['train'], accuracy['test']))
+                                    accuracy['train'], accuracy['valid'], accuracy['test']))
 
 
 saveModel(savePath, team, optimizer, params)

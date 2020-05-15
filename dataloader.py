@@ -62,9 +62,9 @@ class Dataloader:
         self.invAttrPairVocab = {index:value for value, index \
                                                 in self.attrPairVocab.items()}
 
-        # Separate data loading for test/train
+        # Separate data loading for test/valid/train
         self.data = {}
-        for dtype in ['train', 'test']:
+        for dtype in ['train', 'valid', 'test']:
             data = torch.LongTensor(self.numInst[dtype], self.numAttrs)
             for ii, attrSet in enumerate(self.split[dtype]):
                 data[ii] = torch.LongTensor([self.attrVocab[at] for at in attrSet])
@@ -84,7 +84,7 @@ class Dataloader:
         for key, value in loaded.items(): setattr(self, key, value)
 
     # create and save the dataset
-    def saveDataset(self, savePath, trainSize=0.8):
+    def saveDataset(self, savePath, trainSize=0.7, validSize=0.15):
         # attributes = ['colors', 'shapes', 'styles']
         attributes = ['colors', 'shapes', 'styles', 'sizes']
         # larger dataset
@@ -109,12 +109,14 @@ class Dataloader:
         numImgs = len(dataVerbose)
         numInst = {}
         numInst['train'] = int(trainSize * numImgs)
-        numInst['test'] = numImgs - numInst['train']
+        numInst['valid'] = int(validSize * numImgs)
+        numInst['test'] = numImgs - numInst['train'] - numInst['valid']
 
         # randomly select test
         splitData = {}
-        splitData['test'] = random.sample(dataVerbose, numInst['test'])
-        splitData['train'] = list(set(dataVerbose) - set(splitData['test']))
+        splitData['train'] = random.sample(dataVerbose, numInst['train'])
+        splitData['valid'] = random.sample(list(set(dataVerbose) - set(splitData['train'])), numInst['valid'])
+        splitData['test'] = list(set(dataVerbose) - set(splitData['train']) - set(splitData['valid']))
 
         # six tasks, including the order
         # taskDefn = [[0, 1], [1, 0], [0, 2], \
@@ -273,4 +275,4 @@ if __name__ == '__main__':
     options = {}
     # create dataloader
     data = Dataloader(options)
-    data.saveDataset('data/toy420_split_0.8.json', 0.8)
+    data.saveDataset('data/toy420_split_0.8.json')

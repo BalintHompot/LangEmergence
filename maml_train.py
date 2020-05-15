@@ -157,7 +157,7 @@ for episode in range(params['num_episodes']):
     if episode%params['validation_frequency'] == 0:
         team.evaluate()
 
-        for dtype in ['train', 'test']:
+        for dtype in ['train','valid', 'test']:
             # get the entire batch
             img, task, labels = data.getCompleteData(dtype)
             # evaluate on the train dataset, using greedy policy
@@ -172,19 +172,19 @@ for episode in range(params['num_episodes']):
             
         time = strftime("%a, %d %b %Y %X", gmtime())
 
-        print('[%s][Episode: %.2f][Query set total reward: %.4f][Tr acc: %.2f Test acc: %.2f]' % \
+        print('[%s][Episode: %.2f][Query set total reward: %.4f][Tr acc: %.2f Valid acc: %.2f Test acc: %.2f]' % \
                         (time, episode, totalReward,\
-                        accuracy['train'], accuracy['test']))
+                        accuracy['train'], accuracy['valid'], accuracy['test']))
 
 
     
         # save model and res if validation accuracy is the best
-        if accuracy['test'] >= best_results["valid_seen_domains"]:
+        if accuracy['valid'] >= best_results["valid_seen_domains"]:
             saveModel(savePath, team, optimizer_inner, params)
             new_best_results = {
                 "train_seen_domains" : accuracy['train'].item(),
-                "valid_seen_domains" : accuracy['test'].item(),
-                "test_seen_domains": 0,
+                "valid_seen_domains" : accuracy['valid'].item(),
+                "test_seen_domains": accuracy['test'].item(),
                 "test_unseen_domains" : 0
             }
             best_results = new_best_results
