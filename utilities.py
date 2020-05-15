@@ -5,6 +5,8 @@ import torch
 import sys, json, pdb, math
 sys.path.append('../')
 from html import HTML
+from time import gmtime, strftime
+import os
 
 # Initializing weights
 def initializeWeights(moduleList, itype):
@@ -115,3 +117,36 @@ def saveResultPagePool(loadPath):
 
     # render and save page
     page.savePage(savePath);
+
+#################################################### Added by Balint Hompot ##################################################################
+############################################################################################################################################################
+
+def saveModel(savePath, team, optimizer, params):
+    #------------------------------------------------------------------------
+    # save final model with a time stamp
+    timeStamp = strftime("%a-%d-%b-%Y-%X", gmtime())
+    replaceWith = 'final_%s' % timeStamp
+    finalSavePath = savePath.replace('inter', replaceWith)
+    print('Saving : ' + finalSavePath)
+    team.saveModel(finalSavePath, optimizer, params)
+    #------------------------------------------------------------------------
+
+
+def load_best_results(modelName, params):
+    task_path = "Remember:" + str(params['remember']) + "_AoutVocab=" + str(params['aOutVocab']) + "_QoutVocab="+ str(params['qOutVocab'])
+    if not os.path.exists('results/' + modelName +'/' + task_path):
+        print("no results with this config, making a new one")
+        results = {"train_seen_domains" : 0,
+                    "valid_seen_domains" : 0,
+                    "test_seen_domains": 0,
+                    "test_unseen_domains" : 0}
+    else:
+        print("loading best results with given config")
+        with open('results/' + modelName +'/' + task_path) as json_file:
+            results = json.load(json_file)    
+    return results
+
+def store_results(results, modelName, params):
+    task_path = "Remember:" + str(params['remember']) + "_AoutVocab=" + str(params['aOutVocab']) + "_QoutVocab="+ str(params['qOutVocab'])
+    with open('results/' + modelName +'/' + task_path, 'w+') as json_file:
+        json.dump(results, json_file)    

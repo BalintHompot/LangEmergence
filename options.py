@@ -40,10 +40,13 @@ def read():
                             help='Initial learning rate')
     parser.add_argument('-useGPU', dest='useGPU', action='store_true')
 
+    parser.add_argument('-validation_frequency', default=20, type=int,\
+                        help='Frequency of checking full train and test performance')
+
     # MAML options
     parser.add_argument('-inner_steps', default=5, type=int,\
                         help='Number of inner loop steps - MAML')
-    parser.add_argument('-num_tasks_per_episode', default=3, type=int,\
+    parser.add_argument('-num_tasks_per_episode', default=5, type=int,\
                         help='Number of tasks in one episode - MAML')
     parser.add_argument('-num_episodes', default=100000, type=int,\
                         help='Number of episodes - MAML')

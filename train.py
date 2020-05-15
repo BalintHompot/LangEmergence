@@ -12,8 +12,12 @@ from chatbots import Team
 from dataloader import Dataloader
 import options
 from time import gmtime, strftime
-
+from utilities import saveModel, load_best_results, store_results
+import os
 # read the command line options
+
+MODELNAME = 'original'
+
 options = options.read()
 #------------------------------------------------------------------------
 # setup experiment and dataset
@@ -26,6 +30,7 @@ params = data.params
 for key, value in options.items():
   params[key] = value
 
+### checking and creating the folders and results files
 #------------------------------------------------------------------------
 # build agents, and setup optmizer
 #------------------------------------------------------------------------
@@ -42,9 +47,9 @@ optimizer = optim.Adam([{'params': team.aBot.parameters(), \
 numIterPerEpoch = int(np.ceil(numInst['train']/params['batchSize']))
 numIterPerEpoch = max(1, numIterPerEpoch)
 count = 0
-savePath = 'models/tasks_inter_%dH_%.4flr_%r_%d_%d.tar' %\
-            (params['hiddenSize'], params['learningRate'], params['remember'],\
-            options['aOutVocab'], options['qOutVocab'])
+
+savePath = 'models/' + MODELNAME + '/' + "Remember:" + str(params['remember']) + "_AoutVocab=" + str(params['aOutVocab']) + "_QoutVocab="+ str(params['qOutVocab'])
+best_results = load_best_results(MODELNAME, params)
 
 matches = {}
 accuracy = {}
@@ -69,43 +74,41 @@ for iterId in range(params['numEpochs'] * numIterPerEpoch):
     # take a step by optimizer
     optimizer.step()
     #--------------------------------------------------------------------------
-    # switch to evaluate
-    team.evaluate()
 
-    for dtype in ['train', 'test']:
-        # get the entire batch
-        img, task, labels = data.getCompleteData(dtype)
-        # evaluate on the train dataset, using greedy policy
-        guess, _, _ = team.forward(Variable(img), Variable(task))
+    ## checking model performannce after certain iters
+    if iterId % params['validation_frequency'] == 0:
+        # switch to evaluate
+        team.evaluate()
 
-        # compute accuracy for color, shape, and both
-        firstMatch = guess[0].data == labels[:, 0].long()
-        secondMatch = guess[1].data == labels[:, 1].long()
-        matches[dtype] = firstMatch & secondMatch
-        accuracy[dtype] = 100*torch.sum(matches[dtype])\
-                                    /float(matches[dtype].size(0))
-    # switch to train
-    team.train()
+        for dtype in ['train', 'test']:
+            # get the entire batch
+            img, task, labels = data.getCompleteData(dtype)
+            # evaluate on the train dataset, using greedy policy
+            guess, _, _ = team.forward(Variable(img), Variable(task))
 
-    # break if train accuracy reaches 100%
-    if accuracy['train'] == 100: break
+            # compute accuracy for color, shape, and both
+
+            firstMatch = guess[0].data == labels[:, 0].long()
+            secondMatch = guess[1].data == labels[:, 1].long()
+            matches[dtype] = firstMatch & secondMatch
+            accuracy[dtype] = 100*torch.sum(matches[dtype])\
+                                        /float(matches[dtype].size(0))
+        # switch to train
+        team.train()
+
+        # break if train accuracy reaches 100%
+        if accuracy['train'] == 100: break
+
+        if iterId % 100 != 0: continue
+
+        time = strftime("%a, %d %b %Y %X", gmtime())
+        print('[%s][Iter: %d][Ep: %.2f][R: %.4f][Tr: %.2f Te: %.2f]' % \
+                                    (time, iterId, epoch, team.totalReward,\
+                                    accuracy['train'], accuracy['test']))
 
     # save for every 5k epochs
     # if iterId > 0 and iterId % (10000*numIterPerEpoch) == 0:
-    if iterId >= 0 and iterId % (10000*numIterPerEpoch) == 0:
-        team.saveModel(savePath, optimizer, params)
+    if iterId >= 0 and iterId % 5000 == 0:
+        saveModel(savePath,team, optimizer, params)
 
-    if iterId % 100 != 0: continue
-
-    time = strftime("%a, %d %b %Y %X", gmtime())
-    print('[%s][Iter: %d][Ep: %.2f][R: %.4f][Tr: %.2f Te: %.2f]' % \
-                                (time, iterId, epoch, team.totalReward,\
-                                accuracy['train'], accuracy['test']))
-#------------------------------------------------------------------------
-# save final model with a time stamp
-timeStamp = strftime("%a-%d-%b-%Y-%X", gmtime())
-replaceWith = 'final_%s' % timeStamp
-finalSavePath = savePath.replace('inter', replaceWith)
-print('Saving : ' + finalSavePath)
-team.saveModel(finalSavePath, optimizer, params)
-#------------------------------------------------------------------------
+saveModel(savePath, team, optimizer, params)

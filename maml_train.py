@@ -11,6 +11,7 @@ import numpy as np
 from chatbots import Team
 from dataloader import Dataloader
 import options
+from utilities import saveModel, load_best_results, store_results
 from time import gmtime, strftime
 
 from copy import deepcopy
@@ -18,6 +19,8 @@ from random import sample, shuffle
 
 # read the command line options
 options = options.read()
+
+MODELNAME = 'maml'
 #------------------------------------------------------------------------
 # setup experiment and dataset
 #------------------------------------------------------------------------
@@ -29,6 +32,7 @@ params = data.params
 for key, value in options.items():
   params[key] = value
 
+### checking and creating the folders and results files
 #------------------------------------------------------------------------
 # build agents, and setup optmizer
 #------------------------------------------------------------------------
@@ -44,7 +48,7 @@ team.train()
 task_list = [t for t in range(data.numPairTasks)]
 
 shuffle(task_list)
-num_train_tasks = 18
+num_train_tasks = 10
 num_val_tasks = 1
 num_test_tasks = 1
 train_tasks = task_list[:num_train_tasks]
@@ -52,9 +56,8 @@ val_tasks = task_list[num_train_tasks:num_train_tasks+num_val_tasks]
 test_tasks = task_list[num_train_tasks+num_val_tasks:] 
 
 count = 0
-savePath = 'models/tasks_inter_%dH_%.4flr_%r_%d_%d.tar' %\
-            (params['hiddenSize'], params['learningRate'], params['remember'],\
-            options['aOutVocab'], options['qOutVocab'])
+savePath = 'models/' + MODELNAME + '/' + "Remember:" + str(params['remember']) + "_AoutVocab=" + str(params['aOutVocab']) + "_QoutVocab="+ str(params['qOutVocab'])
+best_results = load_best_results(MODELNAME, params)
 
 matches = {}
 accuracy = {}
@@ -65,10 +68,14 @@ for param in team.aBot.parameters():
 for param in team.qBot.parameters():
     param.requires_grad = False
 
+
 for episode in range(params['num_episodes']):
 
     totalReward = 0
     sampled_tasks = sample(train_tasks, params['num_tasks_per_episode'])
+
+    stored_abot_params = []
+    stored_qbot_params = []
 
     for task in sampled_tasks:
         ## create copy of team for inner update, and inner optimizers
@@ -80,9 +87,9 @@ for episode in range(params['num_episodes']):
             param.requires_grad = True
 
 
-        optimizer_inner = optim.Adam([{'params': team.aBot.parameters(), \
+        optimizer_inner = optim.Adam([{'params': copied_team.aBot.parameters(), \
                                 'lr':params['learningRate_inner']},\
-                        {'params': team.qBot.parameters(), \
+                        {'params': copied_team.qBot.parameters(), \
                                 'lr':params['learningRate_inner']}])
 
         # get double attribute tasks
@@ -124,53 +131,62 @@ for episode in range(params['num_episodes']):
         # backward pass
         batchReward = copied_team.backward(optimizer_inner, batchLabels, episode)
 
-        ## get the stored gradients and update the original model
+        ## storing inner gradients
+        stored_abot_params.append(copied_team.aBot.parameters())
+        stored_qbot_params.append(copied_team.qBot.parameters())
+
+    ## get the stored gradients and update the original model
+    for stored_abot_param_list in stored_abot_params:
         ABotParamList = [p for p in team.aBot.parameters()]
-        for paramInd, param in enumerate(copied_team.aBot.parameters()):
+        for paramInd, param in enumerate(stored_abot_param_list):
             ABotParamList[paramInd] -= params['learningRate'] * param.grad
 
+    for stored_qbot_param_list in stored_qbot_params:
         QBotParamList = [p for p in team.qBot.parameters()]
-        for paramInd, param in enumerate(copied_team.qBot.parameters()):
+        for paramInd, param in enumerate(stored_qbot_param_list):
             QBotParamList[paramInd] -= params['learningRate'] * param.grad
+
+    ## reducing lr
+    if episode+1%1000 == 0:
+        params['learningRate'] /= 5
+        params['learningRate_inner'] /= 5
         
 
 
-    
-    team.evaluate()
+    ### checking after certain episodes
+    if episode%params['validation_frequency'] == 0:
+        team.evaluate()
 
-    for dtype in ['train', 'test']:
-        # get the entire batch
-        img, task, labels = data.getCompleteData(dtype)
-        # evaluate on the train dataset, using greedy policy
-        guess, _, _ = team.forward(Variable(img), Variable(task))
-        # compute accuracy for color, shape, and both
+        for dtype in ['train', 'test']:
+            # get the entire batch
+            img, task, labels = data.getCompleteData(dtype)
+            # evaluate on the train dataset, using greedy policy
+            guess, _, _ = team.forward(Variable(img), Variable(task))
+            # compute accuracy for color, shape, and both
 
-        firstMatch = guess[0].data == labels[:, 0].long()
-        secondMatch = guess[1].data == labels[:, 1].long()
-        matches[dtype] = firstMatch & secondMatch
-        accuracy[dtype] = 100*torch.sum(matches[dtype])\
-                                    /float(matches[dtype].size(0))
-    # switch to train
-    
-    team.train()
+            firstMatch = guess[0].data == labels[:, 0].long()
+            secondMatch = guess[1].data == labels[:, 1].long()
+            matches[dtype] = firstMatch & secondMatch
+            accuracy[dtype] = 100*torch.sum(matches[dtype])\
+                                        /float(matches[dtype].size(0))
+            
+        time = strftime("%a, %d %b %Y %X", gmtime())
 
-    # break if train accuracy reaches 100%
-    if accuracy['train'] == 100: break
+        print('[%s][Episode: %.2f][Query set total reward: %.4f][Tr acc: %.2f Test acc: %.2f]' % \
+                        (time, episode, totalReward,\
+                        accuracy['train'], accuracy['test']))
+
+        # break if train accuracy reaches 100%
+        if accuracy['train'] == 100: break
+        # switch to train
+        
+        team.train()
+
+
     
     # save for every 100 episodes
     if episode >= 0 and episode % 100 == 0:
-        team.saveModel(savePath, optimizer_inner, params)
+        saveModel(savePath, team, optimizer_inner, params)
 
-    time = strftime("%a, %d %b %Y %X", gmtime())
-
-    print('[%s][Episode: %.2f][Query set total reward: %.4f][Tr acc: %.2f Test acc: %.2f]' % \
-                                (time, episode, totalReward,\
-                                accuracy['train'], accuracy['test']))
-#------------------------------------------------------------------------
-# save final model with a time stamp
-timeStamp = strftime("%a-%d-%b-%Y-%X", gmtime())
-replaceWith = 'final_%s' % timeStamp
-finalSavePath = savePath.replace('inter', replaceWith)
-print('Saving : ' + finalSavePath)
-team.saveModel(finalSavePath, optimizer_inner, params)
-#------------------------------------------------------------------------
+### save final model
+saveModel(savePath, team, optimizer_inner, params)

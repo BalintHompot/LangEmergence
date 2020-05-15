@@ -1,11 +1,13 @@
-DATA_PATH='data/toy520_split_0.8.json'
+DATA_PATH='data/toy420_split_0.8.json'
 VISIBLE_CUDA_DEVICES=0
 
 # Train the agents.
-python maml_train.py -learningRate 0.0001 -hiddenSize 100 -batchSize 1000 \
+python maml_train.py -learningRate 0.001 -hiddenSize 100 -batchSize 1000 \
                 -imgFeatSize 50 -embedSize 50\
                 -dataset $DATA_PATH\
-                -aOutVocab 50 -qOutVocab 50 -useGPU -remember
+                -aOutVocab 12 -qOutVocab 4 -useGPU
+                -learningRate_inner 0.001
+                -remember
 
 
 # Test the agents (from a checkpoint) and visualize the dialogs.

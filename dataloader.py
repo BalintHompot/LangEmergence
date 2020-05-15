@@ -47,8 +47,8 @@ class Dataloader:
         # number of single and pair wise tasks
         # self.numPairTasks = 6
         # self.numSingleTasks = 3
-        self.numPairTasks = 20
-        self.numSingleTasks = 5
+        self.numPairTasks = 12
+        self.numSingleTasks = 4
 
         # create a vocab map for field values
         attrVals = functools.reduce(lambda x, y: x+y,
@@ -86,7 +86,7 @@ class Dataloader:
     # create and save the dataset
     def saveDataset(self, savePath, trainSize=0.8):
         # attributes = ['colors', 'shapes', 'styles']
-        attributes = ['colors', 'shapes', 'styles', 'sizes', 'positions']
+        attributes = ['colors', 'shapes', 'styles', 'sizes']
         # larger dataset
         # props = {'colors': ['red', 'green', 'blue', 'purple', \
         #                    'yellow', 'cyan', 'orange', 'teal'], \
@@ -101,7 +101,7 @@ class Dataloader:
                 'shapes': ['square', 'triangle', 'circle', 'star'], \
                 'styles': ['dotted', 'solid', 'filled', 'dashed'], \
                 'sizes': ['tiny', 'small', 'medium', 'large'], \
-                'positions': ['top', 'bottom', 'left', 'right']}
+                }
         attrList = [props[ii] for ii in attributes]
         dataVerbose = list(itertools.product(*attrList))
 
@@ -122,12 +122,11 @@ class Dataloader:
         #             [0, 0], [1, 1], [2, 2]]
 
         # twenty tasks, including the order
-        taskDefn = [[0, 1], [0, 2], [0, 3], [0, 4], \
-                    [1, 0], [1, 2], [1, 3], [1, 4], \
-                    [2, 0], [2, 1], [2, 3], [2, 4], \
-                    [3, 0], [3, 1], [3, 2], [3, 4], \
-                    [4, 0], [4, 1], [4, 2], [4, 3], \
-                    [0, 0], [1, 1], [2, 2], [3, 3], [4, 4]]
+        taskDefn = [[0, 1], [0, 2], [0, 3], \
+                    [1, 0], [1, 2], [1, 3],  \
+                    [2, 0], [2, 1], [2, 3],  \
+                    [3, 0], [3, 1], [3, 2], \
+                    [0, 0], [1, 1], [2, 2], [3, 3]]
 
         toSave = {'attributes':attributes, 'props':props, 'taskDefn':taskDefn,\
                     'numInst':numInst, 'split':splitData}
@@ -274,4 +273,4 @@ if __name__ == '__main__':
     options = {}
     # create dataloader
     data = Dataloader(options)
-    data.saveDataset('data/toy520_split_0.8.json', 0.8)
+    data.saveDataset('data/toy420_split_0.8.json', 0.8)
