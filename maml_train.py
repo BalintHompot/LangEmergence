@@ -44,16 +44,16 @@ team.train()
 #------------------------------------------------------------------------
 # begin training
 
-### split tasks into train, valid and test
+### split tasks into train, valid and test, storing the split in data Object
 task_list = [t for t in range(data.numPairTasks)]
 
 shuffle(task_list)
 num_train_tasks = 10
-num_val_tasks = 1
-num_test_tasks = 1
+num_test_tasks = 2
 train_tasks = task_list[:num_train_tasks]
-val_tasks = task_list[num_train_tasks:num_train_tasks+num_val_tasks]  
-test_tasks = task_list[num_train_tasks+num_val_tasks:] 
+test_tasks = task_list[num_train_tasks:] 
+data.seenTaskList = torch.LongTensor(train_tasks)
+data.unseenTaskList = torch.LongTensor(test_tasks)
 
 count = 0
 savePath = 'models/' + MODELNAME + '/' + "Remember:" + str(params['remember']) + "_AoutVocab=" + str(params['aOutVocab']) + "_QoutVocab="+ str(params['qOutVocab'])
@@ -61,6 +61,8 @@ best_results = load_best_results(MODELNAME, params)
 
 matches = {}
 accuracy = {}
+matches_unseen = {}
+accuracy_unseen = {}
 bestAccuracy = 0
 
 for param in team.aBot.parameters():
@@ -169,12 +171,26 @@ for episode in range(params['num_episodes']):
             matches[dtype] = firstMatch & secondMatch
             accuracy[dtype] = 100*torch.sum(matches[dtype])\
                                         /float(matches[dtype].size(0))
+        
+        ### chack acc on unseen domains
+        for dtype in ['train','valid', 'test']:
+            # get the entire batch
+            img, task, labels = data.getCompleteData(dtype, 'unseen')
+            # evaluate on the train dataset, using greedy policy
+            guess, _, _ = team.forward(Variable(img), Variable(task))
+            # compute accuracy for color, shape, and both
+
+            firstMatch = guess[0].data == labels[:, 0].long()
+            secondMatch = guess[1].data == labels[:, 1].long()
+            matches_unseen[dtype] = firstMatch & secondMatch
+            accuracy_unseen[dtype] = 100*torch.sum(matches_unseen[dtype])\
+                                        /float(matches_unseen[dtype].size(0))
             
         time = strftime("%a, %d %b %Y %X", gmtime())
-
-        print('[%s][Episode: %.2f][Query set total reward: %.4f][Tr acc: %.2f Valid acc: %.2f Test acc: %.2f]' % \
+        avg_unseen_acc = 0.5*accuracy_unseen['valid'].item() + 0.5*accuracy_unseen['test'].item()
+        print('[%s][Episode: %.2f][Query set total reward: %.4f][SEEN TASK--Tr acc: %.2f Valid acc: %.2f Test acc: %.2f][UNSEEN TASK--Tr acc: %.2f V+Tst acc: %.2f]' % \
                         (time, episode, totalReward,\
-                        accuracy['train'], accuracy['valid'], accuracy['test']))
+                        accuracy['train'], accuracy['valid'], accuracy['test'], accuracy_unseen['train'],avg_unseen_acc))
 
 
     
@@ -185,7 +201,8 @@ for episode in range(params['num_episodes']):
                 "train_seen_domains" : accuracy['train'].item(),
                 "valid_seen_domains" : accuracy['valid'].item(),
                 "test_seen_domains": accuracy['test'].item(),
-                "test_unseen_domains" : 0
+                "train_unseen_domains": accuracy_unseen['train'].item(),
+                "val+test_unseen_domains" : avg_unseen_acc
             }
             best_results = new_best_results
             store_results(new_best_results, MODELNAME, params)

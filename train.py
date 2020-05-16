@@ -14,6 +14,7 @@ import options
 from time import gmtime, strftime
 from utilities import saveModel, load_best_results, store_results
 import os
+from random import shuffle
 # read the command line options
 
 MODELNAME = 'original'
@@ -24,6 +25,17 @@ options = options.read()
 #------------------------------------------------------------------------
 data = Dataloader(options)
 numInst = data.getInstCount()
+
+### split tasks into train, valid and test, storing the split in data Object
+task_list = [t for t in range(data.numPairTasks)]
+
+shuffle(task_list)
+num_train_tasks = 10
+num_test_tasks = 2
+train_tasks = task_list[:num_train_tasks]
+test_tasks = task_list[num_train_tasks:] 
+data.seenTaskList = torch.LongTensor(train_tasks)
+data.unseenTaskList = torch.LongTensor(test_tasks)
 
 params = data.params
 # append options from options to params
@@ -53,6 +65,8 @@ best_results = load_best_results(MODELNAME, params)
 
 matches = {}
 accuracy = {}
+matches_unseen = {}
+accuracy_unseen = {}
 bestAccuracy = 0
 for iterId in range(params['numEpochs'] * numIterPerEpoch):
     epoch = float(iterId)/numIterPerEpoch
@@ -67,12 +81,14 @@ for iterId in range(params['numEpochs'] * numIterPerEpoch):
                                                         params['negFraction'])
 
     # forward pass
+    team.train()
     team.forward(Variable(batchImg), Variable(batchTask))
     # backward pass
     batchReward = team.backward(optimizer, batchLabels, epoch)
 
     # take a step by optimizer
     optimizer.step()
+    optimizer.zero_grad()
     #--------------------------------------------------------------------------
 
     ## checking model performannce after certain iters
@@ -93,9 +109,23 @@ for iterId in range(params['numEpochs'] * numIterPerEpoch):
             matches[dtype] = firstMatch & secondMatch
             accuracy[dtype] = 100*torch.sum(matches[dtype])\
                                         /float(matches[dtype].size(0))
-        # switch to train
-        team.train()
 
+
+        ### check acc on unseen domains
+        for dtype in ['train','valid', 'test']:
+            # get the entire batch
+            img, task, labels = data.getCompleteData(dtype, 'unseen')
+            # evaluate on the train dataset, using greedy policy
+            guess, _, _ = team.forward(Variable(img), Variable(task))
+            # compute accuracy for color, shape, and both
+
+            firstMatch = guess[0].data == labels[:, 0].long()
+            secondMatch = guess[1].data == labels[:, 1].long()
+            matches_unseen[dtype] = firstMatch & secondMatch
+            accuracy_unseen[dtype] = 100*torch.sum(matches_unseen[dtype])\
+                                        /float(matches_unseen[dtype].size(0))
+            
+        avg_unseen_acc = 0.5*accuracy_unseen['valid'].item() + 0.5*accuracy_unseen['test'].item()
         # save model and res if validation accuracy is the best
         if accuracy['valid'] >= best_results["valid_seen_domains"]:
             saveModel(savePath, team, optimizer, params)
@@ -103,20 +133,23 @@ for iterId in range(params['numEpochs'] * numIterPerEpoch):
                 "train_seen_domains" : accuracy['train'].item(),
                 "valid_seen_domains" : accuracy['valid'].item(),
                 "test_seen_domains": accuracy['test'].item(),
-                "test_unseen_domains" : 0
+                "train_unseen_domains": accuracy_unseen['train'].item(),
+                "val+test_unseen_domains" : avg_unseen_acc
             }
             best_results = new_best_results
             store_results(new_best_results, MODELNAME, params)
-
         # break if train accuracy reaches 100%
         if accuracy['train'] == 100: break
 
         if iterId % 100 != 0: continue
 
         time = strftime("%a, %d %b %Y %X", gmtime())
-        print('[%s][Iter: %d][Ep: %.2f][R: %.4f][Train: %.2f Valid: %.2f Teest: %.2f]' % \
+
+
+        print('[%s][Iter: %d][Ep: %.2f][R: %.4f][SEEN TASKS--Train: %.2f Valid: %.2f Test: %.2f][UNSEEN TASKS--Train: %.2f V+Tst: %.2f]' % \
                                     (time, iterId, epoch, team.totalReward,\
-                                    accuracy['train'], accuracy['valid'], accuracy['test']))
+                                    accuracy['train'], accuracy['valid'], accuracy['test'], accuracy_unseen['train'], avg_unseen_acc))
+        
 
 
 saveModel(savePath, team, optimizer, params)

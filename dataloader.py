@@ -77,6 +77,9 @@ class Dataloader:
                 self.data[key] = value.cuda()
             self.rangeInds = self.rangeInds.cuda()
 
+        self.seenTaskList = []
+        self.unseenTaskList = []
+
     # load dataset
     def loadDataset(self, loadPath):
         # load and absorb the values
@@ -178,7 +181,8 @@ class Dataloader:
         if self.useGPU: indices = indices.cuda()
         #-------------------------------------------------------------
         # fill the first batchSize/2 based on previously misclassified examples
-        negInds = currentPred.view(-1, self.numPairTasks).sum(1) < self.numPairTasks
+        
+        negInds = currentPred.view(-1, len(self.seenTaskList)).sum(1) < len(self.seenTaskList)
         negInds = self.rangeInds.masked_select(negInds)
         negBatchSize = int(batchSize * negFraction)
         # sample from this
@@ -200,12 +204,18 @@ class Dataloader:
         return batch, tasks, labels
 
     # Get all configurations
-    def getCompleteData(self, dtype):
+    def getCompleteData(self, dtype, tasks_list = 'seen'):
         # expand self.data three folds, along with labels
-
-        batch = self.data[dtype].unsqueeze(0).repeat(1, 1, self.numPairTasks)
+        if tasks_list == 'seen':
+            tasks = self.seenTaskList
+            taskNum = len(self.seenTaskList)
+        else:
+            tasks = self.unseenTaskList
+            taskNum = len(self.unseenTaskList)
+            
+        batch = self.data[dtype].unsqueeze(0).repeat(1, 1, taskNum)
         batch = batch.view(-1, self.numAttrs)
-        tasks = torch.arange(0, self.numPairTasks).long()
+
         tasks = tasks.unsqueeze(0).repeat(1, self.numInst[dtype]).view(-1)
 
         # now sample predictions based on task
@@ -213,6 +223,7 @@ class Dataloader:
         if self.useGPU:
             selectInds = selectInds.cuda()
             tasks = tasks.cuda()
+
         labels = batch.gather(1, selectInds)
         return batch, tasks, labels
 
