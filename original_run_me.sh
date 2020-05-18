@@ -5,7 +5,7 @@ VISIBLE_CUDA_DEVICES=0
 python train.py -learningRate 0.01 -hiddenSize 50 -batchSize 1000 \
                 -imgFeatSize 50 -embedSize 50\
                 -dataset $DATA_PATH\
-                -aOutVocab 4 -qOutVocab 5 -useGPU
+                -aOutVocab 4 -qOutVocab 4 -useGPU
 
 
 # Test the agents (from a checkpoint) and visualize the dialogs.

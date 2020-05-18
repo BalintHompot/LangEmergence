@@ -5,7 +5,7 @@ VISIBLE_CUDA_DEVICES=0
 python maml_train.py -learningRate 0.001 -hiddenSize 100 -batchSize 1000 \
                 -imgFeatSize 50 -embedSize 50\
                 -dataset $DATA_PATH\
-                -aOutVocab 12 -qOutVocab 4 -useGPU
+                -aOutVocab 4 -qOutVocab 4 -useGPU
                 -learningRate_inner 0.001
                 -remember
 
