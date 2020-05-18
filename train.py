@@ -32,7 +32,6 @@ def runOriginalModelTrain(runName = 'single' ):
     ### split tasks into train, valid and test, storing the split in data Object
     task_list = [t for t in range(data.numPairTasks)]
 
-    shuffle(task_list)
     num_train_tasks = 10
     num_test_tasks = 2
     train_tasks = task_list[:num_train_tasks]
