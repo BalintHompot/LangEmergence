@@ -121,6 +121,20 @@ def saveResultPagePool(loadPath):
 #################################################### Added by Balint Hompot ##################################################################
 ############################################################################################################################################################
 
+def makeDirs(savePath):
+    pathComponents = savePath.split("/")[1:]
+    path = 'models/'
+    pathRes = 'results/'
+    for pathComp in pathComponents:
+
+        if not os.path.exists(path):
+            os.makedirs(path)
+        if not os.path.exists(pathRes):
+            os.makedirs(pathRes)
+        path += pathComp + "/"
+        pathRes += pathComp + "/"
+    exit()
+
 def saveModel(savePath, team, optimizer, params):
     #------------------------------------------------------------------------
     # save final model with a time stamp
