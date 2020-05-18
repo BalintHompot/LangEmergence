@@ -4,7 +4,7 @@ VISIBLE_CUDA_DEVICES=0
 # Train the agents.
 python maml_train.py -learningRate 0.001 -hiddenSize 100 -batchSize 1000 \
                 -imgFeatSize 50 -embedSize 50\
-                -num_episodes 200000\
+                -num_episodes 10000\
                 -dataset $DATA_PATH\
                 -inner_steps 0\
                 -aOutVocab 4 -qOutVocab 4 -useGPU\
