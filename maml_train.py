@@ -49,7 +49,6 @@ def runMAMLtrain(runName = 'single'):
     ### split tasks into train, valid and test, storing the split in data Object
     task_list = [t for t in range(data.numPairTasks)]
 
-    shuffle(task_list)
     num_train_tasks = 10
     num_test_tasks = 2
     train_tasks = task_list[:num_train_tasks]
@@ -132,7 +131,7 @@ def runMAMLtrain(runName = 'single'):
 
             # forward pass
             copied_team.forward(Variable(batchImg), Variable(batchTask))
-            totalReward += copied_team.totalReward
+            #totalReward += copied_team.totalReward
             # backward pass
             batchReward = copied_team.backward(optimizer_inner, batchLabels, episode)
 

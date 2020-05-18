@@ -154,7 +154,7 @@ class Dataloader:
         # if tasks == 'dosample':
         #     tasks = torch.LongTensor(batchSize).random_(0, self.numPairTasks)
         if isinstance(tasks, str):
-            tasks = torch.LongTensor(batchSize).random_(0, self.numPairTasks)
+            tasks = torch.LongTensor(batchSize).random_(0, len(self.seenTaskList))
         # sample a batch
         indices = torch.LongTensor(batchSize).random_(0, self.numInst['train'])
         if self.useGPU: indices = indices.cuda()
@@ -175,7 +175,7 @@ class Dataloader:
         # if tasks == 'dosample':
         #     tasks = torch.LongTensor(batchSize).random_(0, self.numPairTasks)
         if isinstance(tasks, str):
-            tasks = torch.LongTensor(batchSize).random_(0, self.numPairTasks)
+            tasks = torch.LongTensor(batchSize).random_(0, len(self.seenTaskList))
         # sample a batch
         indices = torch.LongTensor(batchSize).random_(0, self.numInst['train'])
         if self.useGPU: indices = indices.cuda()
