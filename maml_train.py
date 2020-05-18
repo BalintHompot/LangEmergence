@@ -10,16 +10,19 @@ import itertools, pdb, random, os
 import numpy as np
 from chatbots import Team
 from dataloader import Dataloader
-import options
+import options as op
 from utilities import saveModel, load_best_results, store_results, makeDirs
 from time import gmtime, strftime
+from multiRunWrapper import multiRunWrapper
 
 from copy import deepcopy
 from random import sample, shuffle
+options = op.read()
+MODELNAME = 'maml'
 
 def runMAMLtrain(runName = 'single'):
 
-    MODELNAME = 'maml'
+    
     #------------------------------------------------------------------------
     # setup experiment and dataset
     #------------------------------------------------------------------------
@@ -57,7 +60,7 @@ def runMAMLtrain(runName = 'single'):
     count = 0
     savePath = 'models/' + MODELNAME + '/' + "Remember:" + str(params['remember']) + "_AoutVocab=" + str(params['aOutVocab']) + "_QoutVocab="+ str(params['qOutVocab'])+ "/" + "run"+str(runName)
     makeDirs(savePath)
-    best_results = load_best_results(MODELNAME, params)
+    best_results = load_best_results(MODELNAME, runName, params)
 
     matches = {}
     accuracy = {}
@@ -197,15 +200,14 @@ def runMAMLtrain(runName = 'single'):
             # save model and res if validation accuracy is the best
             if accuracy['valid'] >= best_results["valid_seen_domains"]:
                 saveModel(savePath, team, optimizer_inner, params)
-                new_best_results = {
+                best_results = {
                     "train_seen_domains" : accuracy['train'].item(),
                     "valid_seen_domains" : accuracy['valid'].item(),
                     "test_seen_domains": accuracy['test'].item(),
                     "train_unseen_domains": accuracy_unseen['train'].item(),
                     "val+test_unseen_domains" : avg_unseen_acc
                 }
-                best_results = new_best_results
-                store_results(new_best_results, MODELNAME, params)
+                store_results(best_results, MODELNAME, runName, params)
 
             # break if train accuracy reaches 100%
             if accuracy['train'] == 100: break
@@ -217,7 +219,8 @@ def runMAMLtrain(runName = 'single'):
 
     ### save final model
     saveModel(savePath, team, optimizer_inner, params)
+    print("run finished, returning best results")
+    return best_results
 
 #### main - called by the shell script
-options = options.read()
-runMAMLtrain()
+multiRunWrapper(runMAMLtrain, MODELNAME)

@@ -10,15 +10,18 @@ import itertools, pdb, random, os
 import numpy as np
 from chatbots import Team
 from dataloader import Dataloader
-import options
+import options as op
 from time import gmtime, strftime
 from utilities import saveModel, load_best_results, store_results, makeDirs
 import os
 from random import shuffle
+from multiRunWrapper import multiRunWrapper
 # read the command line options
+options = op.read()
+MODELNAME = 'original'
 
 def runOriginalModelTrain(runName = 'single' ):
-    MODELNAME = 'original'
+    
 
     #------------------------------------------------------------------------
     # setup experiment and dataset
@@ -62,7 +65,7 @@ def runOriginalModelTrain(runName = 'single' ):
 
     savePath = 'models/' + MODELNAME + '/' + "Remember:" + str(params['remember']) + "_AoutVocab=" + str(params['aOutVocab']) + "_QoutVocab="+ str(params['qOutVocab']) + "/" + "run"+str(runName)
     makeDirs(savePath)
-    best_results = load_best_results(MODELNAME, params)
+    best_results = load_best_results(MODELNAME, runName, params)
 
     matches = {}
     accuracy = {}
@@ -130,15 +133,14 @@ def runOriginalModelTrain(runName = 'single' ):
             # save model and res if validation accuracy is the best
             if accuracy['valid'] >= best_results["valid_seen_domains"]:
                 saveModel(savePath, team, optimizer, params)
-                new_best_results = {
+                best_results = {
                     "train_seen_domains" : accuracy['train'].item(),
                     "valid_seen_domains" : accuracy['valid'].item(),
                     "test_seen_domains": accuracy['test'].item(),
                     "train_unseen_domains": accuracy_unseen['train'].item(),
                     "val+test_unseen_domains" : avg_unseen_acc
                 }
-                best_results = new_best_results
-                store_results(new_best_results, MODELNAME, params)
+                store_results(best_results, MODELNAME, runName, params)
             # break if train accuracy reaches 100%
             if accuracy['train'] == 100: break
 
@@ -154,7 +156,9 @@ def runOriginalModelTrain(runName = 'single' ):
 
 
     saveModel(savePath, team, optimizer, params)
+    print("run finished, returning best results")
+    return best_results
 
-#### main - called by the shell script
-options = options.read()
-runOriginalModelTrain()
+
+### this part is called by shell script
+multiRunWrapper(runOriginalModelTrain, MODELNAME)

@@ -42,6 +42,8 @@ def read():
 
     parser.add_argument('-validation_frequency', default=20, type=int,\
                         help='Frequency of checking full train and test performance')
+    parser.add_argument('-num_runs', default=5, type=int,\
+                        help='How many times we repeat the experiment')
 
     # MAML options
     parser.add_argument('-inner_steps', default=5, type=int,\

@@ -133,7 +133,6 @@ def makeDirs(savePath):
             os.makedirs(pathRes)
         path += pathComp + "/"
         pathRes += pathComp + "/"
-    exit()
 
 def saveModel(savePath, team, optimizer, params):
     #------------------------------------------------------------------------
@@ -146,8 +145,8 @@ def saveModel(savePath, team, optimizer, params):
     #------------------------------------------------------------------------
 
 
-def load_best_results(modelName, params):
-    task_path = "Remember:" + str(params['remember']) + "_AoutVocab=" + str(params['aOutVocab']) + "_QoutVocab="+ str(params['qOutVocab'])
+def load_best_results(modelName, runName, params):
+    task_path = "Remember:" + str(params['remember']) + "_AoutVocab=" + str(params['aOutVocab']) + "_QoutVocab="+ str(params['qOutVocab']) + "/" + "run"+str(runName)
     if not os.path.exists('results/' + modelName +'/' + task_path):
         print("no results with this config, making a new one")
         results = {"train_seen_domains" : 0,
@@ -160,7 +159,7 @@ def load_best_results(modelName, params):
             results = json.load(json_file)    
     return results
 
-def store_results(results, modelName, params):
-    task_path = "Remember:" + str(params['remember']) + "_AoutVocab=" + str(params['aOutVocab']) + "_QoutVocab="+ str(params['qOutVocab'])
+def store_results(results, modelName, runName, params):
+    task_path = "Remember:" + str(params['remember']) + "_AoutVocab=" + str(params['aOutVocab']) + "_QoutVocab="+ str(params['qOutVocab']) + "/" + "run"+str(runName)
     with open('results/' + modelName +'/' + task_path, 'w+') as json_file:
         json.dump(results, json_file)    

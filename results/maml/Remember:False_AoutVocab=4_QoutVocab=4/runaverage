@@ -1,0 +1,1 @@
+{"train_seen_domains": {"mean": 0.29050278663635254, "std": 0.258194849641116}, "valid_seen_domains": {"mean": 0.3157894849777222, "std": 0.3068922159671784}, "test_seen_domains": {"mean": 0.10256410837173462, "std": 0.12561486571713312}, "train_unseen_domains": {"mean": 0.0, "std": 0.0}, "val+test_unseen_domains": {"mean": 0.0, "std": 0.0}}
