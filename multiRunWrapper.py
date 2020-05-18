@@ -14,6 +14,7 @@ def multiRunWrapper(modelTrainerFunction, modelName):
                         "val+test_unseen_domains" : []
                     }
     for run_id in num_of_runs:
+        print(str(modelName) + " - starting run " + str(run_id))
         current_res = modelTrainerFunction(run_id)
         for key, obj in run_results.items():
             obj.append(current_res[key])
