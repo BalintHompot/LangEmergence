@@ -32,8 +32,8 @@ def runOriginalModelTrain(runName = 'single' ):
     ### split tasks into train, valid and test, storing the split in data Object
     task_list = [t for t in range(data.numPairTasks)]
 
-    num_train_tasks = 10
-    num_test_tasks = 2
+    num_train_tasks = 11
+    num_test_tasks = 1
     train_tasks = task_list[:num_train_tasks]
     test_tasks = task_list[num_train_tasks:] 
     data.seenTaskList = torch.LongTensor(train_tasks)
