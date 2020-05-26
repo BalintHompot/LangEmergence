@@ -146,13 +146,19 @@ class Questioner(ChatBot):
         # start token included
         numPreds = sum([len(ii) for ii in self.props.values()])
         # network for predicting
-        self.predictRNN = nn.LSTMCell(self.embedSize, self.hiddenSize)
+        # embedsize *2 because we embed the two components separately
+        self.predictRNN = nn.LSTMCell(self.embedSize *2, self.hiddenSize)
         self.predictNet = nn.Linear(self.hiddenSize, numPreds)
         initializeWeights([self.predictNet, self.predictRNN, self.rnn], 'xavier')
 
         # setting offset
         self.taskOffset = params['aOutVocab'] + params['qOutVocab']
         self.listenOffset = params['aOutVocab']
+
+        self.tasklist_per_component = torch.LongTensor([[0, 1], [0, 2], [0, 3], \
+                    [1, 0], [1, 2], [1, 3],  \
+                    [2, 0], [2, 1], [2, 3],  \
+                    [3, 0], [3, 1], [3, 2]]) \
 
     # make a guess the given image
     def guessAttribute(self, inputEmbeds):
@@ -177,7 +183,7 @@ class Questioner(ChatBot):
 
         for _ in range(numTokens):
             # explicit task dependence
-            taskEmbeds = self.inNet(tasks)
+            taskEmbeds = self.embedTask(tasks)
             guess, distr = self.guessAttribute(taskEmbeds)
 
             # record the guess and distribution
@@ -188,7 +194,12 @@ class Questioner(ChatBot):
         return guessTokens, guessDistr
 
     # Embedding the image
-    def embedTask(self, tasks): return self.inNet(tasks + self.taskOffset)
+    def embedTask(self, tasks): 
+        task_composition = self.tasklist_per_component[tasks]
+        embedded = self.inNet(task_composition.to('cuda'))
+        concatenated_embedding = torch.reshape(embedded, (embedded.shape[0], embedded.shape[1] * embedded.shape[2]))
+
+        return concatenated_embedding
 
 #---------------------------------------------------------------------------
 class Team:
