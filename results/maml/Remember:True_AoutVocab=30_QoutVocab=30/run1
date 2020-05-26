@@ -1,0 +1,1 @@
+{"train_seen_domains": 99.39055633544922, "valid_seen_domains": 68.18181610107422, "test_seen_domains": 62.237762451171875, "train_unseen_domains": 0.0, "val+test_unseen_domains": 0.0}
