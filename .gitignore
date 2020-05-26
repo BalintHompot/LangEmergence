@@ -1,7 +1,8 @@
 models/*
+results/*
 *.log
 *.html
 *pyc
 *pickle
 *json
-results/original/*
+
