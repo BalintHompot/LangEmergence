@@ -98,6 +98,8 @@ def runOriginalModelTrain(runName = 'single' ):
         if iterId % params['validation_frequency'] == 0:
             # switch to evaluate
             team.evaluate()
+            best_avg_valid_acc = 0.5* best_results["valid_seen_domains"] + 0.5 * best_results["valid_unseen_domains"]
+
 
             for dtype in ['train', 'valid', 'test']:
                 # get the entire batch
@@ -128,18 +130,21 @@ def runOriginalModelTrain(runName = 'single' ):
                 accuracy_unseen[dtype] = 100*torch.sum(matches_unseen[dtype])\
                                             /float(matches_unseen[dtype].size(0))
                 
-            avg_unseen_acc = 0.5*accuracy_unseen['valid'].item() + 0.5*accuracy_unseen['test'].item()
+            avg_valid_acc = 0.5*accuracy['valid'].item() + 0.5*accuracy_unseen['valid'].item()
             # save model and res if validation accuracy is the best
-            if accuracy['valid'] >= best_results["valid_seen_domains"]:
+            if avg_valid_acc >= best_avg_valid_acc:
                 saveModel(savePath, team, optimizer, params)
                 best_results = {
                     "train_seen_domains" : accuracy['train'].item(),
                     "valid_seen_domains" : accuracy['valid'].item(),
                     "test_seen_domains": accuracy['test'].item(),
                     "train_unseen_domains": accuracy_unseen['train'].item(),
-                    "val+test_unseen_domains" : avg_unseen_acc
+                    "valid_unseen_domains": accuracy_unseen['valid'].item(),
+                    "test_unseen_domains" :  accuracy_unseen['test'].item(),
                 }
                 store_results(best_results, MODELNAME, runName, params)
+                best_avg_valid_acc = 0.5* best_results["valid_seen_domains"] + 0.5 * best_results["valid_unseen_domains"]
+
             # break if train accuracy reaches 100%
             if accuracy['train'] == 100: break
 
@@ -148,13 +153,13 @@ def runOriginalModelTrain(runName = 'single' ):
             time = strftime("%a, %d %b %Y %X", gmtime())
 
 
-            print('[%s][Iter: %d][Ep: %.2f][R: %.4f][SEEN TASKS--Train: %.2f Valid: %.2f Test: %.2f][UNSEEN TASKS--Train: %.2f V+Tst: %.2f]' % \
+            print('[%s][Iter: %d][Ep: %.2f][R: %.4f][SEEN TASKS--Train: %.2f Valid: %.2f Test: %.2f][UNSEEN TASKS--Train: %.2f V: %.2f Tst: %.2f]' % \
                                         (time, iterId, epoch, team.totalReward,\
-                                        accuracy['train'], accuracy['valid'], accuracy['test'], accuracy_unseen['train'], avg_unseen_acc))
+                                        accuracy['train'], accuracy['valid'], accuracy['test'], accuracy_unseen['train'], accuracy_unseen['valid'],accuracy_unseen['test'],))
             
 
 
-    saveModel(savePath, team, optimizer, params)
+    ##saveModel(savePath, team, optimizer, params)
     print("run finished, returning best results")
     return best_results
 

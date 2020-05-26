@@ -160,6 +160,7 @@ def runMAMLtrain(runName = 'single'):
         ### checking after certain episodes
         if episode%params['validation_frequency'] == 0:
             team.evaluate()
+            best_avg_valid_acc = 0.5* best_results["valid_seen_domains"] + 0.5 * best_results["valid_unseen_domains"]
 
             for dtype in ['train','valid', 'test']:
                 # get the entire batch
@@ -189,25 +190,26 @@ def runMAMLtrain(runName = 'single'):
                                             /float(matches_unseen[dtype].size(0))
                 
             time = strftime("%a, %d %b %Y %X", gmtime())
-            avg_unseen_acc = 0.5*accuracy_unseen['valid'].item() + 0.5*accuracy_unseen['test'].item()
-            print('[%s][Episode: %.2f][Query set total reward: %.4f][SEEN TASK--Tr acc: %.2f Valid acc: %.2f Test acc: %.2f][UNSEEN TASK--Tr acc: %.2f V+Tst acc: %.2f]' % \
+            avg_valid_acc = 0.5*accuracy['valid'].item() + 0.5*accuracy_unseen['valid'].item()
+            print('[%s][Episode: %.2f][Query set total reward: %.4f][SEEN TASK--Tr acc: %.2f Valid acc: %.2f Test acc: %.2f][UNSEEN TASK--Tr acc: %.2f V acc: %.2f Tst acc: %.2f]' % \
                             (time, episode, totalReward,\
-                            accuracy['train'], accuracy['valid'], accuracy['test'], accuracy_unseen['train'],avg_unseen_acc))
+                            accuracy['train'], accuracy['valid'], accuracy['test'], accuracy_unseen['train'], accuracy_unseen['valid'], accuracy_unseen['test']))
 
 
         
             # save model and res if validation accuracy is the best
-            if accuracy['valid'] >= best_results["valid_seen_domains"]:
+            if avg_valid_acc >= best_avg_valid_acc:
                 saveModel(savePath, team, optimizer_inner, params)
                 best_results = {
                     "train_seen_domains" : accuracy['train'].item(),
                     "valid_seen_domains" : accuracy['valid'].item(),
                     "test_seen_domains": accuracy['test'].item(),
                     "train_unseen_domains": accuracy_unseen['train'].item(),
-                    "val+test_unseen_domains" : avg_unseen_acc
+                    "valid_unseen_domains": accuracy_unseen['valid'].item(),
+                    "test_unseen_domains" : accuracy_unseen['test'].item()
                 }
                 store_results(best_results, MODELNAME, runName, params)
-
+                best_avg_valid_acc = 0.5* best_results["valid_seen_domains"] + 0.5 * best_results["valid_unseen_domains"]
             # break if train accuracy reaches 100%
             if accuracy['train'] == 100: break
             # switch to train
@@ -217,7 +219,7 @@ def runMAMLtrain(runName = 'single'):
 
 
     ### save final model
-    saveModel(savePath, team, optimizer_inner, params)
+    ##saveModel(savePath, team, optimizer_inner, params)
     print("run finished, returning best results")
     return best_results
 

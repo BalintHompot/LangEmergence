@@ -152,6 +152,8 @@ def load_best_results(modelName, runName, params):
         results = {"train_seen_domains" : 0,
                     "valid_seen_domains" : 0,
                     "test_seen_domains": 0,
+                    "train_unseen_domains" : 0,
+                    "valid_unseen_domains" : 0,
                     "test_unseen_domains" : 0}
     else:
         print("loading best results with given config")
