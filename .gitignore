@@ -4,4 +4,4 @@ models/*
 *pyc
 *pickle
 *json
-
+results/original/*
