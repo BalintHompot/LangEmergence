@@ -11,7 +11,8 @@ def multiRunWrapper(modelTrainerFunction, modelName):
                         "valid_seen_domains" : [],
                         "test_seen_domains": [],
                         "train_unseen_domains": [],
-                        "val+test_unseen_domains" : []
+                        "valid_unseen_domains": [],
+                        "test_unseen_domains" : []
                     }
     for run_id in num_of_runs:
         print(str(modelName) + " - starting run " + str(run_id))
@@ -25,7 +26,8 @@ def multiRunWrapper(modelTrainerFunction, modelName):
                         "valid_seen_domains" :  {"mean": np.mean(run_results["valid_seen_domains"]), "std":np.std(run_results["valid_seen_domains"])},
                         "test_seen_domains":  {"mean": np.mean(run_results["test_seen_domains"]), "std":np.std(run_results["test_seen_domains"])},
                         "train_unseen_domains":  {"mean": np.mean(run_results["train_unseen_domains"]), "std":np.std(run_results["train_unseen_domains"])},
-                        "val+test_unseen_domains" :  {"mean": np.mean(run_results["val+test_unseen_domains"]), "std":np.std(run_results["val+test_unseen_domains"])}
+                        "valid_unseen_domains":  {"mean": np.mean(run_results["valid_unseen_domains"]), "std":np.std(run_results["valid_unseen_domains"])},
+                        "test_unseen_domains" :  {"mean": np.mean(run_results["test_unseen_domains"]), "std":np.std(run_results["test_unseen_domains"])}
                     }
     print("################################ FINAL AVERAGE RESULTS ###################################################")
     print(final_results)
